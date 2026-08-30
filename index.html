@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Balance</title>
+    <title>Tether</title>
     <meta
       name="description"
-      content="Balance — drag falling weights along a pivoted beam to keep it level before it tips."
+      content="Tether — pull the orb back on its elastic tether and let go to launch it at the glowing target."
     />
 
     <meta property="og:type" content="website" />
@@ -22,11 +22,15 @@
       </nav>
     </header>
     <main>
-      <h1 class="visually-hidden">Balance</h1>
+      <h1 class="visually-hidden">Tether</h1>
       <div id="stage">
+        <canvas id="scene"></canvas>
         <div id="score">0</div>
-        <div id="pivot"></div>
-        <div id="beam"></div>
+        <div id="misses">
+          <span class="pip lit"></span>
+          <span class="pip lit"></span>
+          <span class="pip lit"></span>
+        </div>
       </div>
     </main>
     <script type="module" src="./game.js"></script>
