@@ -2,17 +2,23 @@ import {
   createInitialState,
   resetGame,
   stepGame,
+  rollerXAt,
   LANES,
   LANE_HALF_WIDTH,
-  GRACE_MS,
+  ROLLER_SPEED_MULT_MIN,
+  ROLLER_SPEED_MULT_MAX,
   type GameState,
 } from "./engine/marble.ts";
 
 const stage = document.getElementById("stage") as HTMLDivElement;
 const canvas = document.getElementById("scene") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
-const progressFill = document.getElementById("progress-fill") as HTMLDivElement;
+const scoreEl = document.getElementById("score") as HTMLDivElement;
 const heartEls = Array.from(document.querySelectorAll("#hearts .heart"));
+const speedSlider = document.getElementById("speed-slider") as HTMLInputElement;
+
+speedSlider.min = String(ROLLER_SPEED_MULT_MIN);
+speedSlider.max = String(ROLLER_SPEED_MULT_MAX);
 
 // How far ahead (in distance units) the top of the screen looks — small
 // enough that the marble's own base speed still reads as "rolling", large
@@ -54,6 +60,12 @@ let keySteer: -1 | 0 | 1 = 0;
 let pointerSteer: -1 | 0 | 1 = 0;
 let pointerActive = false;
 let lastTime = 0;
+let rollerSpeedMultiplier = 1;
+
+speedSlider.value = String(rollerSpeedMultiplier);
+speedSlider.addEventListener("input", () => {
+  rollerSpeedMultiplier = Number(speedSlider.value);
+});
 
 function currentSteer(): -1 | 0 | 1 {
   return pointerActive ? pointerSteer : keySteer;
@@ -63,6 +75,11 @@ function flash(kind: "flash-hit" | "flash-boost"): void {
   stage.classList.remove("flash-hit", "flash-boost");
   void stage.offsetWidth;
   stage.classList.add(kind);
+}
+
+function restart(): void {
+  state = resetGame();
+  stage.classList.remove("gameover", "flash-hit", "flash-boost");
 }
 
 function stagePointFromEvent(e: PointerEvent): { x: number } {
@@ -75,9 +92,8 @@ function steerFromPoint(x: number): -1 | 0 | 1 {
 }
 
 stage.addEventListener("pointerdown", (e) => {
-  if (state.isLost || state.isWon) {
-    state = resetGame();
-    stage.classList.remove("gameover", "won", "flash-hit", "flash-boost");
+  if (state.isLost) {
+    restart();
     return;
   }
   pointerActive = true;
@@ -99,9 +115,8 @@ stage.addEventListener("pointerup", endPointer);
 stage.addEventListener("pointercancel", endPointer);
 
 window.addEventListener("keydown", (e) => {
-  if (state.isLost || state.isWon) {
-    state = resetGame();
-    stage.classList.remove("gameover", "won", "flash-hit", "flash-boost");
+  if (state.isLost) {
+    restart();
     return;
   }
   if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") keySteer = -1;
@@ -175,6 +190,29 @@ function drawGates(now: number): void {
   }
 }
 
+// Rollers sweep continuously across the track (not snapped to a lane), so
+// they're drawn as a second, smaller marble rather than a lane-width bar —
+// the shape itself reads as "a moving hazard," not "a wall."
+function drawRollers(): void {
+  for (const roller of state.rollers) {
+    if (roller.resolved) continue;
+    const y = distanceToY(roller.distance);
+    if (y < -60 || y > height + 60) continue;
+    const rollerX = rollerXAt(roller, state.rollerProgress);
+    const x = trackX(rollerX);
+    const gradient = ctx.createRadialGradient(x - 3, y - 3, 1, x, y, 12);
+    gradient.addColorStop(0, "#ffd0d8");
+    gradient.addColorStop(1, "#c0304a");
+    ctx.fillStyle = gradient;
+    ctx.shadowColor = "rgba(224, 84, 107, 0.7)";
+    ctx.shadowBlur = 14;
+    ctx.beginPath();
+    ctx.arc(x, y, 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+}
+
 function drawMarble(now: number): void {
   const x = trackX(state.x);
   const boosted = state.elapsed < state.boostUntil;
@@ -203,8 +241,7 @@ function drawMarble(now: number): void {
 }
 
 function updateHud(): void {
-  const pct = Math.min(100, (state.distance / state.finishDistance) * 100);
-  progressFill.style.width = `${pct}%`;
+  scoreEl.textContent = String(Math.floor(state.distance));
   heartEls.forEach((el, i) => {
     el.classList.toggle("lit", i < state.hearts);
   });
@@ -217,16 +254,16 @@ function frame(now: number): void {
   const dt = lastTime === 0 ? 16 : Math.min(now - lastTime, 50);
   lastTime = now;
 
-  if (!state.isWon && !state.isLost) {
-    state = stepGame(state, { steer: currentSteer() }, dt);
+  if (!state.isLost) {
+    state = stepGame(state, { steer: currentSteer(), rollerSpeedMultiplier }, dt);
     if (state.justHit) flash("flash-hit");
     if (state.justBoosted) flash("flash-boost");
     if (state.isLost) stage.classList.add("gameover");
-    if (state.isWon) stage.classList.add("won");
   }
 
   drawLanes();
   drawObstacles();
+  drawRollers();
   drawGates(now);
   drawMarble(now);
   updateHud();
