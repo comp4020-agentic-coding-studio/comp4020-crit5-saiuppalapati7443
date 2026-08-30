@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tether</title>
+    <title>Marble Crash</title>
     <meta
       name="description"
-      content="Tether — pull the orb back on its elastic tether and let go to launch it at the glowing target."
+      content="Marble Crash — steer a rolling marble down a 3-lane track, dodge the hazards, and ride the gold gates through to the finish."
     />
 
     <meta property="og:type" content="website" />
@@ -22,17 +22,17 @@
       </nav>
     </header>
     <main>
-      <h1 class="visually-hidden">Tether</h1>
+      <h1 class="visually-hidden">Marble Crash</h1>
       <div id="stage">
         <canvas id="scene"></canvas>
-        <div id="score">0</div>
-        <div id="misses">
-          <span class="pip lit"></span>
-          <span class="pip lit"></span>
-          <span class="pip lit"></span>
+        <div id="progress"><div id="progress-fill"></div></div>
+        <div id="hearts">
+          <span class="heart lit"></span>
+          <span class="heart lit"></span>
+          <span class="heart lit"></span>
         </div>
       </div>
     </main>
-    <script type="module" src="./game.js"></script>
+    <script type="module" src="./src/main.ts"></script>
   </body>
 </html>

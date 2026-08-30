@@ -53,8 +53,11 @@ main {
   position: relative;
   width: 100%;
   height: 100%;
+  max-width: 720px;
+  margin: 0 auto;
   overflow: hidden;
   cursor: default;
+  touch-action: none;
 }
 
 #scene {
@@ -63,41 +66,50 @@ main {
   display: block;
 }
 
-#score {
+#progress {
   position: absolute;
-  top: 1.25rem;
-  right: 1.5rem;
-  font-size: 1.5rem;
-  font-variant-numeric: tabular-nums;
-  color: #3a4152;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
   z-index: 5;
-  user-select: none;
 }
 
-#misses {
+#progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #6fb3ff, #a6f0d8);
+  box-shadow: 0 0 10px rgba(111, 179, 255, 0.8);
+  transition: width 0.1s linear;
+}
+
+#hearts {
   position: absolute;
-  top: 1.5rem;
-  left: 1.5rem;
+  top: 1.25rem;
+  left: 1.25rem;
   display: flex;
   gap: 0.4rem;
   z-index: 5;
 }
 
-.pip {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+.heart {
+  width: 16px;
+  height: 16px;
   background: #2a3040;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  clip-path: path(
+    "M8 14.5 C-2 7.5 1 0.5 8 4.5 C15 0.5 18 7.5 8 14.5 Z"
+  );
   transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 
-.pip.lit {
-  background: #6fb3ff;
-  box-shadow: 0 0 8px rgba(111, 179, 255, 0.7);
+.heart.lit {
+  background: #ff6b81;
+  box-shadow: 0 0 8px rgba(255, 107, 129, 0.7);
 }
 
-#stage.gameover {
+#stage.gameover,
+#stage.won {
   cursor: pointer;
 }
 
@@ -111,13 +123,27 @@ main {
   z-index: 4;
 }
 
-#stage.flash::after {
-  animation: flash 0.6s ease-out;
+#stage.flash-hit::after {
+  animation: flash-red 0.6s ease-out;
 }
 
-@keyframes flash {
+#stage.flash-boost::after {
+  background: radial-gradient(circle at 50% 50%, rgba(255, 210, 90, 0.55), transparent 65%);
+  animation: flash-gold 0.6s ease-out;
+}
+
+@keyframes flash-red {
   0% {
     opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes flash-gold {
+  0% {
+    opacity: 0.9;
   }
   100% {
     opacity: 0;
